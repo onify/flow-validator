@@ -1,0 +1,49 @@
+{
+  "name": "@onify/flow-validator",
+  "version": "0.0.1",
+  "description": "Validate you Onify Flow",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "posttest": "eslint . --cache",
+    "toc": "node scripts/generate-api-toc ./README.md",
+    "prepare": "npm run toc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onify/flow-validator.git"
+  },
+  "keywords": [
+    "onify",
+    "flow",
+    "bpmn",
+    "bpmn 2.0",
+    "validator",
+    "test"
+  ],
+  "author": {
+    "name": "Onify",
+    "url": "https://github.com/onify"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/onify/flow-validator/issues"
+  },
+  "homepage": "https://github.com/onify/flow-validator#readme",
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "markdown-toc": "^1.2.0",
+    "mocha": "^8.3.2"
+  },
+  "dependencies": {
+    "bpmn-engine": "^11.4.1",
+    "bpmn-moddle": "^7.0.4",
+    "camunda-bpmn-moddle": "^5.0.0",
+    "cron": "^1.8.2",
+    "eslint": "^7.22.0",
+    "moddle-context-serializer": "^0.16.1"
+  },
+  "files": [
+    "index.js"
+  ]
+}

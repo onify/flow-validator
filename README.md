@@ -6,7 +6,8 @@ Validate you Onify Flow.
 
 <!-- toc -->
 
-- [Introduction](#introduction)
+- [Flow Validator](#flow-validator)
+- [Onify Flow Introduction](#onify-flow-introduction)
 - [Timers](#timers)
   - [`timeDuration`](#timeduration)
   - [`timeCycle`](#timecycle)
@@ -26,8 +27,8 @@ Validate you Onify Flow.
   - [Global context](#global-context)
     - [`fields`](#fields)
     - [`content`](#content)
-    - [`environment`](#environment)
     - [`properties`](#properties)
+    - [`environment`](#environment)
     - [`contextName`](#contextname)
     - [`next(err, result)`](#nexterr-result)
     - [`Buffer.from(...args)`](#bufferfromargs)
@@ -41,7 +42,46 @@ Validate you Onify Flow.
 
 <!-- tocstop -->
 
-# Introduction
+# Flow Validator
+
+Mocha example
+
+```js
+const FlowValidator = require('@onify/flow-validator');
+const {expect} = require('chai');
+const {promises: fs} = require('fs');
+
+describe('all my flows are valid', () => {
+  let source, validator;
+  before(async () => {
+    source = await fs.readFile('./resources/happy-trail.bpmn');
+    validator = FlowValidator(source);
+  });
+
+  it('model has no errors', async () => {
+    const {warnings} = await validator.validate();
+    const message = warnings.map(({message}) => message).join('\n');
+    expect(warnings, message).to.have.length(0);
+  });
+
+  it('scripts have no linting errors', async () => {
+    const linting = await validator.lint();
+    expect(linting, linting).to.have.length(0);
+  });
+
+  it('but I know we have some console.logs, it\'s OK', async () => {
+    const {linting} = await validator.validate({
+      rules: {
+        'no-console': 2,
+      }
+    });
+    expect(linting, linting).to.have.length.above(0);
+    expect(linting[0]).to.contain('no-console');
+  });
+});
+````
+
+# Onify Flow Introduction
 
 Onify flow is based on the open source workflow engine [bpmn-engine](https://github.com/paed01/bpmn-engine).
 

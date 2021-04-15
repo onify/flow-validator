@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" id="Definitions_1m70y72" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.6.0">
+  <bpmn:message id="Message_05hqb5i" name="prepareUsersFullIndex" />
+  <bpmn:message id="Message_1tveek5" name="readUsersFromJsonFile" />
+  <bpmn:process id="blueprint-activedirectory-index-users" name="Onify Blueprint: Indexing users from Active Directory" isExecutable="true">
+    <bpmn:startEvent id="StartEvent" name="Start">
+      <bpmn:outgoing>Flow_0izjmr2</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="EndEvent" name="End">
+      <bpmn:incoming>Flow_08d3yjv</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:intermediateCatchEvent id="waitForPrepareTask" name="Wait for &#10;prepare task">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:outputParameter name="test2">
+            <camunda:script scriptFormat="js">console.log('test2', content.output);
+next();</camunda:script>
+          </camunda:outputParameter>
+          <camunda:outputParameter name="state">
+            <camunda:script scriptFormat="js">next(null, {
+    id: 'prepare',
+    result: {
+        done: true,
+        error: false,
+        skipped: false
+    },
+});</camunda:script>
+          </camunda:outputParameter>
+          <camunda:outputParameter name="prepareUsersFullIndexResult">${content.output.result.response}</camunda:outputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_04ds58e</bpmn:incoming>
+      <bpmn:incoming>Flow_13k6o6e</bpmn:incoming>
+      <bpmn:outgoing>Flow_1vdph6a</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0wyus5m" messageRef="Message_05hqb5i" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="prepareUsersFullIndex" name="Prepare user data for indexing (full index)">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="method">post</camunda:inputParameter>
+            <camunda:inputParameter name="query">
+              <camunda:map>
+                <camunda:entry key="tag">agent</camunda:entry>
+                <camunda:entry key="async">${true}</camunda:entry>
+              </camunda:map>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="payload">
+              <camunda:script scriptFormat="js">next(null, {
+  vars: [
+   '-arrSearchConfig user',
+   '-deltaSync'
+  ],
+});</camunda:script>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="url">/admin/agents/task/prepareOnifyIndexAD</camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>onifyElevatedApiRequest</camunda:connectorId>
+        </camunda:connector>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="state">
+            <camunda:script scriptFormat="js">next(null, {
+    id: 'prepare',
+    name: 'Prepare user data',
+    result: {
+        done: false
+    }
+});</camunda:script>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0izjmr2</bpmn:incoming>
+      <bpmn:outgoing>Flow_04ds58e</bpmn:outgoing>
+      <bpmn:outgoing>Flow_13k6o6e</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0izjmr2" sourceRef="StartEvent" targetRef="prepareUsersFullIndex" />
+    <bpmn:sequenceFlow id="Flow_04ds58e" sourceRef="prepareUsersFullIndex" targetRef="waitForPrepareTask" />
+    <bpmn:sequenceFlow id="Flow_13k6o6e" sourceRef="prepareUsersFullIndex" targetRef="waitForPrepareTask" />
+    <bpmn:subProcess id="subProcess" name="Read, transform and index 1000 users at a time">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="test">
+            <camunda:script scriptFormat="js">console.log(environment.output.prepareUsersFullIndexResult);
+next();</camunda:script>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="state">
+            <camunda:script scriptFormat="js">next(null, {
+    pushstate: true,
+    id: 'index',
+    name: 'Index user data',
+    result: {
+        done: false
+    }
+});</camunda:script>
+          </camunda:inputParameter>
+          <camunda:inputParameter name="prepareUsersFullIndexResult">${environment.output.prepareUsersFullIndexResult}</camunda:inputParameter>
+          <camunda:outputParameter name="state">
+            <camunda:script scriptFormat="js">next(null, {
+    id: 'index',
+    result: {
+        done: true
+    }
+});</camunda:script>
+          </camunda:outputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1vdph6a</bpmn:incoming>
+      <bpmn:outgoing>Flow_08d3yjv</bpmn:outgoing>
+      <bpmn:startEvent id="startSubProcess">
+        <bpmn:outgoing>Flow_1sy6je1</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:scriptTask id="transform" name="Transform users to items" scriptFormat="js" camunda:resultVariable="userItems">
+        <bpmn:incoming>Flow_1m2yoiv</bpmn:incoming>
+        <bpmn:outgoing>Flow_0ln72wd</bpmn:outgoing>
+        <bpmn:script>console.log('------');
+console.log(environment.output);
+console.log('------');
+console.log(JSON.stringify(environment.output,null,2));
+
+const jsonObj = JSON.parse(environment.output.readUsersFromJsonFileResult);
+const users = jsonObj.records;
+
+const itemUsers = [];
+users.forEach((user) =&gt; {
+/*
+    const itemUser = {
+        type: "user",
+        key: user.key,
+        name: user.name,
+        tag: ["user", "ad", "blueprint", "blueprint-activedirectory-index-users"]
+    };
+
+    itemUsers.push(itemUser);
+*/
+  itemUsers.push(user);
+});
+
+next(null, itemUsers);</bpmn:script>
+      </bpmn:scriptTask>
+      <bpmn:serviceTask id="bulkitems" name="Bulk index users">
+        <bpmn:extensionElements>
+          <camunda:connector>
+            <camunda:inputOutput>
+              <camunda:inputParameter name="payload">${environment.output.userItems}</camunda:inputParameter>
+              <camunda:inputParameter name="method">POST</camunda:inputParameter>
+              <camunda:inputParameter name="url">/admin/bulk/items</camunda:inputParameter>
+            </camunda:inputOutput>
+            <camunda:connectorId>onifyApiRequest</camunda:connectorId>
+          </camunda:connector>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_0ifba8g</bpmn:incoming>
+        <bpmn:outgoing>Flow_0veixit</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:intermediateCatchEvent id="waitForReadTask" name="Wait for &#10;read task">
+        <bpmn:extensionElements>
+          <camunda:inputOutput>
+            <camunda:outputParameter name="readUsersFromJsonFileResult">${content.output.result.response}</camunda:outputParameter>
+          </camunda:inputOutput>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_0btmz0i</bpmn:incoming>
+        <bpmn:outgoing>Flow_1m2yoiv</bpmn:outgoing>
+        <bpmn:messageEventDefinition id="MessageEventDefinition_11grsfa" messageRef="Message_1tveek5" />
+      </bpmn:intermediateCatchEvent>
+      <bpmn:exclusiveGateway id="Gateway_1mj7d8m" name="Any records?" default="Flow_1sxq8z7">
+        <bpmn:incoming>Flow_0ln72wd</bpmn:incoming>
+        <bpmn:outgoing>Flow_0ifba8g</bpmn:outgoing>
+        <bpmn:outgoing>Flow_1sxq8z7</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:serviceTask id="readUsersFromJsonFile" name="Read user data">
+        <bpmn:extensionElements>
+          <camunda:connector>
+            <camunda:inputOutput>
+              <camunda:inputParameter name="method">post</camunda:inputParameter>
+              <camunda:inputParameter name="query">
+                <camunda:map>
+                  <camunda:entry key="tag">agent</camunda:entry>
+                  <camunda:entry key="async">${true}</camunda:entry>
+                </camunda:map>
+              </camunda:inputParameter>
+              <camunda:inputParameter name="payload">
+                <camunda:script scriptFormat="js">console.log(environment.output);
+console.log(environment.variables.content.input);
+
+const jsonObj = JSON.parse(environment.variables.content.input.prepareUsersFullIndexResult);
+const userIndexFilePath = jsonObj.searchConfig.user.filePath;
+
+const offset = environment.output.offset || 0;
+
+const payload = {
+  vars: [
+    userIndexFilePath,
+    offset.toString(),
+    '1000',
+  ],
+};
+
+next(null, payload);</camunda:script>
+              </camunda:inputParameter>
+              <camunda:inputParameter name="url">/admin/agents/task/readDataFromJsonFile</camunda:inputParameter>
+            </camunda:inputOutput>
+            <camunda:connectorId>onifyElevatedApiRequest</camunda:connectorId>
+          </camunda:connector>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_0veixit</bpmn:incoming>
+        <bpmn:incoming>Flow_1sy6je1</bpmn:incoming>
+        <bpmn:outgoing>Flow_0btmz0i</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:sequenceFlow id="Flow_1m2yoiv" sourceRef="waitForReadTask" targetRef="transform" />
+      <bpmn:sequenceFlow id="Flow_0ln72wd" sourceRef="transform" targetRef="Gateway_1mj7d8m" />
+      <bpmn:sequenceFlow id="Flow_0ifba8g" name="Yes" sourceRef="Gateway_1mj7d8m" targetRef="bulkitems">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="js">next(null, environment.output.userItems.length);</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_0veixit" sourceRef="bulkitems" targetRef="readUsersFromJsonFile">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="js">const jsonObj = JSON.parse(environment.output.readUsersFromJsonFileResult);
+
+console.log(jsonObj.meta);
+console.log(jsonObj.error);
+
+environment.output.offset = Number(jsonObj.meta.offset) + 1000;
+next(null, true);</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="Flow_0btmz0i" sourceRef="readUsersFromJsonFile" targetRef="waitForReadTask" />
+      <bpmn:sequenceFlow id="Flow_1sy6je1" sourceRef="startSubProcess" targetRef="readUsersFromJsonFile" />
+      <bpmn:endEvent id="endSubProcess">
+        <bpmn:incoming>Flow_1sxq8z7</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_1sxq8z7" name="No" sourceRef="Gateway_1mj7d8m" targetRef="endSubProcess" />
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_1vdph6a" sourceRef="waitForPrepareTask" targetRef="subProcess" />
+    <bpmn:sequenceFlow id="Flow_08d3yjv" sourceRef="subProcess" targetRef="EndEvent" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="blueprint-activedirectory-index-users">
+      <bpmndi:BPMNEdge id="Flow_08d3yjv_di" bpmnElement="Flow_08d3yjv">
+        <di:waypoint x="1360" y="270" />
+        <di:waypoint x="1462" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1vdph6a_di" bpmnElement="Flow_1vdph6a">
+        <di:waypoint x="428" y="270" />
+        <di:waypoint x="480" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13k6o6e_di" bpmnElement="Flow_13k6o6e">
+        <di:waypoint x="340" y="270" />
+        <di:waypoint x="392" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04ds58e_di" bpmnElement="Flow_04ds58e">
+        <di:waypoint x="340" y="270" />
+        <di:waypoint x="392" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0izjmr2_di" bpmnElement="Flow_0izjmr2">
+        <di:waypoint x="188" y="270" />
+        <di:waypoint x="240" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent">
+        <dc:Bounds x="152" y="252" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="161" y="295" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_07hul8z_di" bpmnElement="EndEvent">
+        <dc:Bounds x="1462" y="252" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1470" y="228" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0z25x0r_di" bpmnElement="waitForPrepareTask">
+        <dc:Bounds x="392" y="252" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="382" y="295" width="62" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_042nzfe_di" bpmnElement="prepareUsersFullIndex" bioc:stroke="black" bioc:fill="white">
+        <dc:Bounds x="240" y="230" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0jesow3_di" bpmnElement="subProcess" isExpanded="true">
+        <dc:Bounds x="480" y="90" width="880" height="340" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1sxq8z7_di" bpmnElement="Flow_1sxq8z7">
+        <di:waypoint x="1020" y="295" />
+        <di:waypoint x="1020" y="352" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1028" y="321" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1sy6je1_di" bpmnElement="Flow_1sy6je1">
+        <di:waypoint x="558" y="270" />
+        <di:waypoint x="610" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0btmz0i_di" bpmnElement="Flow_0btmz0i">
+        <di:waypoint x="710" y="270" />
+        <di:waypoint x="762" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0veixit_di" bpmnElement="Flow_0veixit">
+        <di:waypoint x="1170" y="230" />
+        <di:waypoint x="1170" y="173" />
+        <di:waypoint x="660" y="173" />
+        <di:waypoint x="660" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ifba8g_di" bpmnElement="Flow_0ifba8g">
+        <di:waypoint x="1045" y="270" />
+        <di:waypoint x="1120" y="270" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1074" y="252" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ln72wd_di" bpmnElement="Flow_0ln72wd">
+        <di:waypoint x="940" y="270" />
+        <di:waypoint x="995" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1m2yoiv_di" bpmnElement="Flow_1m2yoiv">
+        <di:waypoint x="798" y="270" />
+        <di:waypoint x="840" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1m2rqjn_di" bpmnElement="startSubProcess">
+        <dc:Bounds x="522" y="252" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1dxh6jx_di" bpmnElement="transform">
+        <dc:Bounds x="840" y="230" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1d6swp5_di" bpmnElement="bulkitems">
+        <dc:Bounds x="1120" y="230" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0iong61_di" bpmnElement="waitForReadTask">
+        <dc:Bounds x="762" y="252" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="759" y="295" width="46" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1mj7d8m_di" bpmnElement="Gateway_1mj7d8m" isMarkerVisible="true">
+        <dc:Bounds x="995" y="245" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="988" y="221" width="65" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_198qgyl_di" bpmnElement="readUsersFromJsonFile" bioc:stroke="black" bioc:fill="white">
+        <dc:Bounds x="610" y="230" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_00uya85_di" bpmnElement="endSubProcess">
+        <dc:Bounds x="1002" y="352" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
