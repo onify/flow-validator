@@ -5,7 +5,7 @@
 Validate you Onify Flow.
 
 - [Flow Validator](#flow-validator)
-  -[Linting of script](#linting-of-script)
+  - [Linting of script](#linting-of-script)
 - [Onify Flow Introduction](#onify-flow-introduction)
 - [Timers](#timers)
   - [`timeDuration`](#timeduration)

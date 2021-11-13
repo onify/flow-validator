@@ -1,6 +1,6 @@
 {
   "name": "@onify/flow-validator",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Validate you Onify Flow",
   "main": "index.js",
   "scripts": {
