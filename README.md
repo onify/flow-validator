@@ -4,9 +4,8 @@
 
 Validate you Onify Flow.
 
-<!-- toc -->
-
 - [Flow Validator](#flow-validator)
+  -[Linting of script](#linting-of-script)
 - [Onify Flow Introduction](#onify-flow-introduction)
 - [Timers](#timers)
   - [`timeDuration`](#timeduration)
@@ -39,8 +38,6 @@ Validate you Onify Flow.
     - [`encrypt(text, encoding = 'hex')`](#encrypttext-encoding--hex)
     - [`jwt.sign(...)`](#jwtsign)
     - [`jwt.verify(...)`](#jwtverify)
-
-<!-- tocstop -->
 
 # Flow Validator
 
@@ -80,6 +77,26 @@ describe('all my flows are valid', () => {
   });
 });
 ````
+
+## Linting of script
+
+For the linting to run successfully you need to have an eslint config `.eslintrc.json` in your root folder. Here is a sample:
+
+```json
+{
+  "parserOptions": {
+    "ecmaVersion": 2020
+  },
+  "env": {
+    "node": true,
+    "es6": true
+  },
+  "extends": "eslint:recommended",
+  "rules": {
+    "unicode-bom": ["error", "never"]
+  }
+}
+```
 
 # Onify Flow Introduction
 
